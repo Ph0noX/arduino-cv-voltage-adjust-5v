@@ -8,6 +8,7 @@ Adafruit_MCP4725 dac;
 volatile int old_state = 0;
 volatile int state = 0;
 
+// Value to send to DAC
 volatile int value = 0;
 volatile int new_value = 500;
 
@@ -26,6 +27,15 @@ ISR(PCINT2_vect) {
       new_value--;
     }
   }
+  // If bit 4, update the value with a coarse resolution
+  if (bitRead(changes, 4)) {
+    if (bitRead(state, 4) ^ bitRead(old_state, 5)) {
+      new_value += 8;
+    } else {
+      new_value -= 8;
+    }
+  }
+
   // Store the state to compare against next time
   old_state = state;
 }
@@ -41,13 +51,17 @@ void setup(void) {
   digitalWrite(2, HIGH);
   pinMode(3, INPUT);
   digitalWrite(3, HIGH);
+  pinMode(4, INPUT);
+  digitalWrite(4, HIGH);
+  pinMode(5, INPUT);
+  digitalWrite(5, HIGH);
 
   noInterrupts();
   // Pin change interrupt control register
   PCICR |= 0b100;
   
   // Pin change mask registers decide which pins are enabled as triggers
-  PCMSK2 |= (_BV(PCINT18) | _BV(PCINT19));
+  PCMSK2 |= (_BV(PCINT18) | _BV(PCINT19) | _BV(PCINT20) | _BV(PCINT21));
   interrupts();
 }
 
@@ -69,8 +83,8 @@ void loop(void) {
     if (value > 4095) {
       new_value = value = 4095;
     }
-    if (value < 64) {
-      new_value = value = 64;
+    if (value < 8) {
+      new_value = value = 8;
     }
   
     dac.setVoltage(value, false);
