@@ -10,7 +10,7 @@ volatile int state = 0;
 
 // Value to send to DAC
 volatile int value = 0;
-volatile int new_value = 500;
+volatile int new_value = 4095;
 
 // Used to limit the frequency of timer updates to 30 times per sec
 int old_time = 0;
